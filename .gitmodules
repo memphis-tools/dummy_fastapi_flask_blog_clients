@@ -1,0 +1,3 @@
+[submodule "dummy_fastapi_flask_blog_app"]
+	path = dummy_fastapi_flask_blog_app
+	url = https://github.com/memphis-tools/dummy_fastapi_flask_blog_app.git

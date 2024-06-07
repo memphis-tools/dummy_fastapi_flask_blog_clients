@@ -1,0 +1,297 @@
+# All menus
+
+display_read_submenu() {
+  prompt_user "INFO" "[MENU CONSULTATIONS]"
+  echo -e "1-LIVRES"
+  echo -e "2-UTILISATEURS"
+  echo -e "3-CATEGORIES LIVRES"
+  echo -e "4-DETAIL D'UN LIVRE"
+  echo -e "5-LIVRES PAR CATEGORIE"
+  echo -e "6-LIVRES PAR UTILISATEUR"
+  echo -e "7-COMMENTAIRES PAR LIVRE"
+  echo -e "8-COMMENTAIRES PAR UTILISATEUR"
+  echo -e "9-CITATIONS"
+  echo -e "10-DETAIL D'UNE CITATION"
+  echo -e "11-PRECEDENT"
+  prompt_user "CHOICE" "CHOIX: "
+  read CHOICE
+  if [[ $CHOICE -eq "1" ]]; then
+    display_error_on_get_or_return_response "get_books" "$(get_books $SESSION_TOKEN)"
+  elif [[ $CHOICE -eq "2" ]]; then
+    display_error_on_get_or_return_response "get_users" "$(get_users $SESSION_TOKEN)"
+  elif [[ $CHOICE -eq "3" ]]; then
+    display_error_on_get_or_return_response "get_books_categories" "$(get_books_categories $SESSION_TOKEN)"
+  elif [[ $CHOICE -eq "4" ]]; then
+    declare BOOK_ID
+    echo -en "ID DU LIVRE: "
+    read BOOK_ID
+    check_user_input_while_expecting_a_digit $BOOK_ID display_read_submenu
+    display_error_on_get_or_return_response "get_book_detail" "$(get_book_detail $SESSION_TOKEN $BOOK_ID)"
+  elif [[ $CHOICE -eq "5" ]]; then
+    declare CATEGORY_ID
+    echo -en "ID CATEGORIE: "
+    read CATEGORY_ID
+    check_user_input_while_expecting_a_digit $CATEGORY_ID display_read_submenu
+    display_error_on_get_or_return_response "get_books_from_a_category" "$(get_books_from_a_category $SESSION_TOKEN $CATEGORY_ID)"
+  elif [[ $CHOICE -eq "6" ]]; then
+    declare USER_ID
+    echo -en "ID UTILISATEUR: "
+    read USER_ID
+    check_user_input_while_expecting_a_digit $USER_ID display_read_submenu
+    display_error_on_get_or_return_response "get_books_from_an_user" "$(get_books_from_an_user $SESSION_TOKEN $USER_ID)"
+  elif [[ $CHOICE -eq "7" ]]; then
+    declare BOOK_ID
+    echo -en "ID DU LIVRE: "
+    read BOOK_ID
+    check_user_input_while_expecting_a_digit $BOOK_ID display_read_submenu
+    display_error_on_get_or_return_response "get_book_comments" "$(get_book_comments $SESSION_TOKEN $BOOK_ID)"
+  elif [[ $CHOICE -eq "8" ]]; then
+    declare USER_ID
+    echo -en "ID UTILISATEUR: "
+    read USER_ID
+    check_user_input_while_expecting_a_digit $USER_ID display_read_submenu
+    display_error_on_get_or_return_response "get_user_comments" "$(get_user_comments $SESSION_TOKEN $USER_ID)"
+  elif [[ $CHOICE -eq "9" ]]; then
+    display_error_on_get_or_return_response "get_quotes" "$(get_quotes $SESSION_TOKEN)"
+  elif [[ $CHOICE -eq "10" ]]; then
+    declare QUOTE_ID
+    echo -en "ID DE LA CITATION: "
+    read QUOTE_ID
+    check_user_input_while_expecting_a_digit $QUOTE_ID display_read_submenu
+    display_error_on_get_or_return_response "get_quote_detail" "$(get_quote_detail $SESSION_TOKEN $QUOTE_ID)"
+  elif [[ $CHOICE -eq "11" ]]; then
+    display_mainmenu
+  else
+    prompt_user "ERROR" "CHOIX NON RECONNU"
+    display_read_submenu
+  fi
+}
+
+display_create_submenu() {
+  prompt_user "INFO" "[MENU AJOUTS]"
+  echo -e "1-LIVRES"
+  echo -e "2-UTILISATEURS"
+  echo -e "3-CATEGORIES LIVRES"
+  echo -e "4-COMMENTAIRES"
+  echo -e "5-CITATIONS"
+  echo -e "6-PRECEDENT"
+  prompt_user "CHOICE" "CHOIX: "
+  read CHOICE
+  if [[ $CHOICE -eq "1" ]]; then
+    declare -i BOOK_PUBLICATION_YEAR
+    read -p "TITRE DU LIVRE: " BOOK_TITLE
+    read -p "RESUME DU LIVRE: " BOOK_SUMMARY
+    read -p "DESCRIPTION DU LIVRE: " BOOK_CONTENT
+    read -p "AUTEUR DU LIVRE: " BOOK_AUTHOR
+    read -p "ANNEE DU LIVRE: " BOOK_PUBLICATION_YEAR
+    read -p "CATEGORIE DU LIVRE: " BOOK_CATEGORY
+
+    JSON_PAYLOAD=$(jq -n \
+        --arg title "$BOOK_TITLE" \
+        --arg summary "$BOOK_SUMMARY" \
+        --arg content "$BOOK_CONTENT" \
+        --arg author "$BOOK_AUTHOR" \
+        --arg category "$BOOK_CATEGORY" \
+        --arg year_of_publication "$BOOK_PUBLICATION_YEAR"\
+        '{
+          "title": $title,
+          "summary": $summary,
+          "content": $content,
+          "author": $author,
+          "category": $category,
+          "year_of_publication": $year_of_publication
+        }'
+    )
+    display_error_on_post_or_return_response "post_book" $(post_book $SESSION_TOKEN "$JSON_PAYLOAD")
+  elif [[ $CHOICE -eq "2" ]]; then
+    read -p "NOM UTILISATEUR: " USERNAME
+    read -p "EMAIL UTILISATEUR: " EMAIL
+    read -p "MOT DE PASSE: " PASSWORD
+    read -p "CONFIRMER MOT DE PASSE: " PASSWORD_CHECK
+
+    JSON_PAYLOAD=$(jq -n \
+        --arg username "$USERNAME" \
+        --arg email "$EMAIL" \
+        --arg password "$PASSWORD" \
+        --arg password_check "$PASSWORD_CHECK" \
+        '{
+            "username": $username,
+            "email": $email,
+            "password": $password,
+            "password_check": $password_check
+        }'
+    )
+    RESPONSE=$(post_user "$SESSION_TOKEN" "$JSON_PAYLOAD")
+    display_error_on_post_or_return_response 'post_user' "$RESPONSE"
+  elif [[ $CHOICE -eq "3" ]]; then
+    read -p "NOM NOUVELLE CATEGORIE: " TITLE
+
+    JSON_PAYLOAD=$(jq -n \
+        --arg title "$TITLE" \
+        '{
+            "title": $title,
+        }'
+    )
+    RESPONSE=$(post_category "$SESSION_TOKEN" "$JSON_PAYLOAD")
+    display_error_on_post_or_return_response 'post_category' "$RESPONSE"
+  elif [[ $CHOICE -eq "4" ]]; then
+    read -p "ID LIVRE: " BOOK_ID
+    read -p "COMMENTAIRE: " COMMENT
+
+    JSON_PAYLOAD=$(jq -n \
+        --arg text "$COMMENT" \
+        '{
+            "text": $text,
+        }'
+    )
+    RESPONSE=$(post_comment "$SESSION_TOKEN" "$BOOK_ID" "$JSON_PAYLOAD")
+    display_error_on_post_or_return_response 'post_comment' "$RESPONSE"
+  elif [[ $CHOICE -eq "5" ]]; then
+    read -p "AUTEUR: " AUTHOR
+    read -p "TITRE DU LIVRE: " BOOK_TITLE
+    read -p "CITATION: " QUOTE
+
+    JSON_PAYLOAD=$(jq -n \
+        --arg author "$AUTHOR" \
+        --arg book_title "$BOOK_TITLE" \
+        --arg quote "$QUOTE" \
+        '{
+            "author": $author,
+            "book_title": $book_title,
+            "quote": $quote,
+        }'
+    )
+    RESPONSE=$(post_quote "$SESSION_TOKEN" "$JSON_PAYLOAD")
+    display_error_on_post_or_return_response 'post_quote' "$RESPONSE"
+  elif [[ $CHOICE -eq "6" ]]; then
+    display_mainmenu
+  else
+    prompt_user "ERROR" "CHOIX NON RECONNU"
+    display_create_submenu
+  fi
+}
+
+display_update_submenu() {
+  prompt_user "INFO" "[MENU MISES A JOUR COMPLETES]"
+  echo -e "1-LIVRES"
+  echo -e "2-UTILISATEURS"
+  echo -e "3-CATEGORIES LIVRES"
+  echo -e "4-COMMENTAIRES"
+  echo -e "5-PRECEDENT"
+  prompt_user "CHOICE" "CHOIX: "
+  read CHOICE
+  if [[ $CHOICE -eq "1" ]]; then
+    make_update_book
+  elif [[ $CHOICE -eq "2" ]]; then
+    make_update_user
+  elif [[ $CHOICE -eq "3" ]]; then
+    make_update_category
+  elif [[ $CHOICE -eq "4" ]]; then
+    make_update_comment
+  elif [[ $CHOICE -eq "5" ]]; then
+    display_mainmenu
+  else
+    prompt_user "ERROR" "CHOIX NON RECONNU"
+    display_update_submenu
+  fi
+}
+
+display_partial_update_submenu() {
+  prompt_user "INFO" "[MENU MISES A JOUR PARTIELLES]"
+  echo -e "1-LIVRES"
+  echo -e "2-UTILISATEURS"
+  echo -e "3-PRECEDENT"
+  prompt_user "CHOICE" "CHOIX: "
+  read CHOICE
+  if [[ $CHOICE -eq "1" ]]; then
+    make_partial_update_book
+  elif [[ $CHOICE -eq "2" ]]; then
+    make_partial_update_user
+  elif [[ $CHOICE -eq "3" ]]; then
+    display_mainmenu
+  else
+    prompt_user "ERROR" "CHOIX NON RECONNU"
+    display_partial_update_submenu
+  fi
+}
+
+display_delete_submenu() {
+  prompt_user "INFO" "[MENU SUPPRESSION]"
+  echo -e "1-LIVRES"
+  echo -e "2-UTILISATEURS"
+  echo -e "3-CATEGORIES LIVRES"
+  echo -e "4-COMMENTAIRES"
+  echo -e "5-CITATIONS"
+  echo -e "6-PRECEDENT"
+  prompt_user "CHOICE" "CHOIX: "
+  read CHOICE
+  if [[ $CHOICE -eq "1" ]]; then
+    declare -i BOOK_ID
+    echo -en "ID DU LIVRE: "
+    read BOOK_ID
+    check_user_input_while_expecting_a_digit $BOOK_ID display_delete_submenu
+    display_error_on_delete_or_return_response "delete_book" "$(delete_book $SESSION_TOKEN $BOOK_ID)"
+  elif [[ $CHOICE -eq "2" ]]; then
+    declare -i USER_ID
+    echo -en "ID UTILISATEUR: "
+    read USER_ID
+    check_user_input_while_expecting_a_digit $USER_ID display_delete_submenu
+    display_error_on_delete_or_return_response "delete_quote" "$(delete_user $SESSION_TOKEN $USER_ID)"
+  elif [[ $CHOICE -eq "3" ]]; then
+    declare CATEGORY_ID
+    echo -en "ID CATEGORIE: "
+    read CATEGORY_ID
+    check_user_input_while_expecting_a_digit $CATEGORY_ID display_delete_submenu
+    display_error_on_delete_or_return_response "delete_books_category" "$(delete_books_category $SESSION_TOKEN $CATEGORY_ID)"
+  elif [[ $CHOICE -eq "4" ]]; then
+    declare BOOK_ID
+    echo -en "ID DU LIVRE: "
+    read BOOK_ID
+    check_user_input_while_expecting_a_digit $BOOK_ID display_delete_submenu
+    declare COMMENT_ID
+    echo -en "ID COMMENTAIRE: "
+    read COMMENT_ID
+    check_user_input_while_expecting_a_digit $COMMENT_ID display_delete_submenu
+    display_error_on_delete_or_return_response "delete_comment" "$(delete_comment $SESSION_TOKEN $BOOK_ID $COMMENT_ID)"
+  elif [[ $CHOICE -eq "5" ]]; then
+    declare QUOTE_ID
+    echo -en "ID DE LA CITATION: "
+    read QUOTE_ID
+    check_user_input_while_expecting_a_digit $QUOTE_ID display_delete_submenu
+    display_error_on_delete_or_return_response "delete_quote" "$(delete_quote $SESSION_TOKEN $QUOTE_ID)"
+  elif [[ $CHOICE -eq "6" ]]; then
+    display_mainmenu
+  else
+    prompt_user "ERROR" "CHOIX NON RECONNU"
+    display_delete_submenu
+  fi
+}
+
+display_mainmenu() {
+  while true; do
+    CHOICE=""
+    prompt_user "INFO" "[MENU GENERAL]"
+    echo -e "1-CONSULTATIONS"
+    echo -e "2-AJOUTS"
+    echo -e "3-MISES A JOUR PARTIELLES"
+    echo -e "4-MISES A JOUR COMPLETES"
+    echo -e "5-SUPPRESSIONS"
+    echo -e "0-QUIT"
+    while [[ -z "$CHOICE" ]]; do
+      prompt_user "CHOICE" "CHOIX: "
+      read -r CHOICE
+      if [[ -z "$CHOICE" ]]; then
+        prompt_user "ERROR" "Aucun choix n'a été saisi. Veuillez sélectionner une option."
+      fi
+    done
+    case "$CHOICE" in
+      1) display_read_submenu;;
+      2) display_create_submenu;;
+      3) display_partial_update_submenu;;
+      4) display_update_submenu;;
+      5) display_delete_submenu;;
+      0) exit 0;;
+      *) prompt_user "ERROR" "CHOIX NON RECONNU";;
+    esac
+  done
+}

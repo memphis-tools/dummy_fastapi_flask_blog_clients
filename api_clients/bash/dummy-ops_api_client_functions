@@ -1,0 +1,690 @@
+# All functions used in script
+
+banner() {
+echo -en "\n\e[${PROMPT_COLORS_TAB["INFO_COLOR"]}
+░█▀▄░█░█░█▄█░█▄█░█░█░░░░░█▀█░█▀█░█▀▀░░░█▀█░█▀█░▀█▀░░░█▀█░█▀█░█▀▀░█░█░░░█▀▀░█░░░▀█▀░█▀▀░█▀█░▀█▀
+░█░█░█░█░█░█░█░█░░█░░▄▄▄░█░█░█▀▀░▀▀█░░░█▀█░█▀▀░░█░░░░█▀█░█▀█░▀▀█░█▀█░░░█░░░█░░░░█░░█▀▀░█░█░░█░
+░▀▀░░▀▀▀░▀░▀░▀░▀░░▀░░░░░░▀▀▀░▀░░░▀▀▀░░░▀░▀░▀░░░▀▀▀░░░▀▀▀░▀░▀░▀▀▀░▀░▀░░░▀▀▀░▀▀▀░▀▀▀░▀▀▀░▀░▀░░▀░
+$POSTLUDE_COLOR"
+}
+
+display_help() {
+  echo -e "$(prompt_user "HELP" "NAME: ")$0"
+  echo -e "$(prompt_user "HELP" "VERSION: ")1.0"
+  echo -e "$(prompt_user "HELP" "DESCRIPTION: ")\nA shell client to request a REST API. The API host is a dummy blog: https://dummy-ops.dev/docs"
+  echo -e "Token duration: 30 minutes (defined in the FastAPI project's settings)\n"
+  echo -e "$(prompt_user "HELP" "USAGE:") $0 [-h|u]\n"
+  echo -e "$(prompt_user "HELP" "OPTIONS:")"
+  echo "h     Print the help menu"
+  echo "u     Specify username"
+}
+
+prompt_user() {
+  if [[ $1 == "CHOICE" ]] || [[ $1 == "HELP" ]]; then
+    echo -en "\e[${PROMPT_COLORS_TAB["$1_COLOR"]}$2$POSTLUDE_COLOR"
+  elif [[ $1 == "ERROR" ]] || [[ $1 == "SUCCESS" ]]; then
+    echo -e "\e[${PROMPT_COLORS_TAB["$1_COLOR"]}$2$POSTLUDE_COLOR"
+  else
+    echo -e "\n\e[${PROMPT_COLORS_TAB["$1_COLOR"]} $2$POSTLUDE_COLOR"
+  fi
+}
+
+get_api() {
+  curl -s $API_URL/docs/ > /dev/null 2>&1
+  if ! [[ $? == 0 ]]; then
+    prompt_user "ERROR" "API injoignable"
+    exit 2
+  fi
+}
+
+get_session_token() {
+  curl -s -X "POST" "$API_URL/token/" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=&username=$1&password=$2&scope=&client_id=&client_secret="
+}
+
+get_routes() {
+  curl -s "$API_URL/openapi.json" \
+  -H "Accept: application/json" \
+  | jq -r ".paths"
+}
+
+get_books() {
+  # parameters:
+  # $1 the session token
+  curl -s \
+  "$API_URL/books/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $1"
+}
+
+get_users() {
+  # parameters:
+  # $1 the session token
+  curl -s \
+  "$API_URL/users/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $1"
+}
+
+get_book_detail() {
+  # parameters:
+  # $1 the session token
+  # $2 the book id
+  if [[ $2 -gt 0 ]]
+  then
+    curl -s \
+    "$API_URL/books/$2/" \
+    -H "Accept: application/json" \
+    -H "Authorization: Bearer $1"
+  else
+    prompt_user "ERROR" "ID LIVRE NON NUMERIQUE OU EGAL A 0: $2"
+  fi
+}
+
+get_books_categories() {
+  # parameters:
+  # $1 the session token
+  curl -s \
+  "$API_URL/books/categories/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $1"
+}
+
+get_books_from_a_category() {
+  # parameters:
+  # $1 the session token
+  # $2 the category id
+  curl -s \
+  "$API_URL/books/categories/$2/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $1"
+}
+
+get_books_from_an_user() {
+  # parameters:
+  # $1 the session token
+  # $2 the user id
+  curl -s \
+  "$API_URL/users/$2/books/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $1"
+}
+
+get_book_comments() {
+  # parameters:
+  # $1 the session token
+  # $2 the book id
+  curl -s \
+  "$API_URL/books/$2/comments/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $1"
+}
+
+get_user_comments() {
+  # parameters:
+  # $1 the session token
+  # $2 the user id
+  curl -s \
+  "$API_URL/users/$2/comments/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $1"
+}
+
+get_quotes() {
+  # parameters:
+  # $1 the session token
+  curl -s \
+  "$API_URL/quotes/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $1"
+}
+
+get_quote_detail() {
+  # parameters:
+  # $1 the session token
+  # $2 the quote id
+  curl -s \
+  "$API_URL/quotes/$2/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $1"
+}
+
+post_book() {
+  # parameters:
+  # $1 the session token
+  # $2 the json book
+  curl -s \
+  "$API_URL/books/" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $1" \
+  -d "$2"
+}
+
+post_user() {
+  # parameters:
+  # $1 the session token
+  # $2 the json user
+  curl -s \
+  "$API_URL/users/" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $1" -d "$2"
+}
+
+post_category() {
+  # parameters:
+  # $1 the session token
+  # $2 the json book category
+  curl -s \
+  "$API_URL/books/categories/" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $1" \
+  -d "$2"
+}
+
+post_comment() {
+  # parameters:
+  # $1 the session token
+  # $2 the book id
+  # $2 the json book comment
+  curl -s \
+  "$API_URL/books/comments/?book_id=$2" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $1" \
+  -H "book_id: 1" \
+  -d "$3"
+}
+
+post_quote() {
+  # parameters:
+  # $1 the session token
+  # $2 the json quote
+  curl -s \
+  "$API_URL/quotes/" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $1" \
+  -d "$2"
+}
+
+update_book() {
+  # parameters:
+  # $1 the session token
+  # $2 the book id
+  # $3 the json book
+  curl -s -X PUT \
+  "$API_URL/books/$2/" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $1" \
+  -d "$3"
+}
+
+partial_update_book() {
+  # parameters:
+  # $1 the session token
+  # $2 the book id
+  # $3 the json partial book
+  curl -s -X PATCH \
+  "$API_URL/books/$2/" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $1" \
+  -d "$3"
+}
+
+update_user() {
+  # parameters:
+  # $1 the session token
+  # $2 the user id
+  # $3 the json user
+  curl -s -X PUT \
+  "$API_URL/users/$2/" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $1" \
+  -d "$3"
+}
+
+partial_update_user() {
+  # parameters:
+  # $1 the session token
+  # $2 the user id
+  # $3 the json partial user
+  curl -s -X PATCH \
+  "$API_URL/users/$2/" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $1" \
+  -d "$3"
+}
+
+update_category() {
+  # parameters:
+  # $1 the session token
+  # $2 the category id
+  # $3 the json category
+  curl -s -X PUT \
+  "$API_URL/books/categories/$2/" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $1" \
+  -d "$3"
+}
+
+update_comment() {
+  # parameters:
+  # $1 the session token
+  # $2 the comment id
+  curl -s -X PUT \
+  "$API_URL/books/comments/$2/" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $1" \
+  -d "$3"
+}
+
+delete_book() {
+  # parameters:
+  # $1 the session token
+  # $2 the book id
+  curl -s -w '%{http_code}' -X "DELETE" \
+  "$API_URL/books/$2/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $1"
+}
+
+delete_books_category() {
+  # parameters:
+  # $1 the session token
+  # $2 the book category id
+  curl -s -w '%{http_code}' -X "DELETE" \
+  "$API_URL/books/categories/$2/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $1"
+}
+
+delete_comment() {
+  # parameters:
+  # $1 the session token
+  # $2 the book id
+  # $3 the comment id
+  curl -s -w '%{http_code}' -X "DELETE" \
+  "$API_URL/books/$2/comments/$3/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $1"
+}
+
+delete_user() {
+  # parameters:
+  # $1 the session token
+  # $2 the user id
+  curl -s -w '%{http_code}' -X "DELETE" \
+  "$API_URL/users/$2/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $1"
+}
+
+delete_quote() {
+  # parameters:
+  # $1 the session token
+  # $2 the quote id
+  curl -s -w '%{http_code}' -X "DELETE" \
+  "$API_URL/quotes/$2/" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $1"
+}
+
+check_user_input_while_expecting_a_digit() {
+  # parameters:
+  # $1 a digit id
+  # $2 the callback function
+  RE='^[0-9]+$'
+  if ! [[ $1 =~ $RE ]]; then
+    prompt_user "ERROR" "Id non numérique"
+    $2
+  fi
+}
+
+display_error_on_get_or_return_response() {
+  # description: we look for any errors. We display the JSON if no errors.
+  # parameters:
+  # $1 the context. Either while asking a token session or for any other request,
+  # $2 response from the API
+  ERROR_MESSAGE=$(echo $2 | jq -r '.detail' 2>/dev/zero)
+  if [[ -z $ERROR_MESSAGE ]] || [[ $ERROR_MESSAGE == 'null' ]] || [[ $ERROR_MESSAGE == " " ]]
+  then
+    if [[ $1 == "token" ]]; then
+      SESSION_TOKEN=$(echo $2 | jq -r '.access_token')
+    elif [[ $1 == "get_books" ]]; then
+      IFS=''
+      for elem in $(jq -s '.[] | sort_by(.id)' <<< $2)
+      do
+        echo $elem|jq -r '(["ID","TITRE","AUTEUR","FAVORIS","COMMENTAIRES","RESUME"] | (., map(length*"-"))), (.[] | [.id,.title,.author,(.starred|length),(.book_comments|length),.summary]) | @tsv' | column -ts $'\t'
+      done
+    elif [[ $1 == "get_users" ]]; then
+      IFS=''
+      for elem in $(jq -s '.[] | sort_by(.id)' <<< $2)
+      do
+        echo $elem|jq -r '(["ID","NOM","LIVRES","FAVORIS","COMMENTAIRES"] | (., map(length*"-"))), (.[] | [.id,.username,(.books|length),(.starred|length),(.comments|length)]) | @tsv' | column -ts $'\t'
+      done
+    elif [[ $1 == "get_books_categories" ]]; then
+      IFS=''
+      for elem in $(jq -s '.[] | sort_by(.id)' <<< $2)
+      do
+        echo $elem|jq -r '(["ID","NOM CATEGORIE"] | (., map(length*"-"))), (.[] | [.id,.name]) | @tsv' | column -ts $'\t'
+      done
+    elif [[ $1 == "get_book_detail" ]]; then
+      IFS=''
+      jq -r '(["ID","TITRE","AUTEUR","ANNEE","DESCRIPTION"] | (., map(length*"-"))), ([.id,.title,.author,.year_of_publication,.content]) | @tsv' <<<$2 | column -ts $'\t'
+    elif [[ $1 == "get_books_from_a_category" ]]; then
+      IFS=''
+      jq -r '(["ID","TITRE","AUTEUR","RESUME"] | (., map(length*"-"))), (.[] | [.id,.title,.author,.summary]) | @tsv' <<<$2 | column -ts $'\t'
+    elif [[ $1 == "get_books_from_an_user" ]]; then
+      IFS=''
+      jq -r '(["ID","TITRE","AUTEUR","RESUME"] | (., map(length*"-"))), (.[] | [.id,.title,.author,.summary]) | @tsv' <<<$2 | column -ts $'\t'
+    elif [[ $1 == "get_book_comments" ]]; then
+      IFS=''
+      jq -r '(["ID","UTILISATEUR","COMMENTAIRE"] | (., map(length*"-"))), (.[] | [.id,.author_id,.text]) | @tsv' <<<$2 | column -ts $'\t'
+    elif [[ $1 == "get_user_comments" ]]; then
+      IFS=''
+      jq -r '(["ID COMMENTAIRE","ID LIVRE","COMMENTAIRE"] | (., map(length*"-"))), (.[] | [.id,.book_id,.text]) | @tsv' <<<$2 | column -ts $'\t'
+    elif [[ $1 == "get_quotes" ]]; then
+      IFS=''
+      jq -r '(["ID","CITATION"] | (., map(length*"-"))), (.[] | [.id,.quote]) | @tsv' <<<$2 | column -ts $'\t'
+    elif [[ $1 == "get_quote_detail" ]]; then
+      IFS=''
+      jq -r '(["ID","CITATION"] | (., map(length*"-"))), (.[] | [.id,.quote]) | @tsv' <<<$2 | column -ts $'\t'
+    fi
+  else
+    prompt_user "ERROR" "$ERROR_MESSAGE"
+    if [[ $1 == "token" ]]
+    then
+      exit 1
+    fi
+  fi
+}
+
+display_error_on_post_or_return_response() {
+  # description: we look for any errors.
+  # parameters:
+  # $1 the context. Either while asking a token session or for any other request,
+  # $2 response from the API
+  ERROR_MESSAGE=$(echo $2 | jq -r '.detail' 2>/dev/null)
+  if [[ -z $ERROR_MESSAGE ]] || [[ $ERROR_MESSAGE == 'null' ]] || [[ $ERROR_MESSAGE == " " ]]
+  then
+    case "$1" in
+      post_book) prompt_user "SUCCESS" "Ajout livre effectué" ;;
+      post_user) prompt_user "SUCCESS" "Ajout utilisateur effectué" ;;
+      post_category) prompt_user "SUCCESS" "Ajout catégorie effectué" ;;
+      post_comment) prompt_user "SUCCESS" "Ajout commentaire effectué" ;;
+      post_quote) prompt_user "SUCCESS" "Ajout citation effectué" ;;
+    esac
+  else
+    prompt_user "ERROR" "$ERROR_MESSAGE"
+  fi
+}
+
+display_error_on_update_or_return_response() {
+  # description: we look for any errors.
+  # parameters:
+  # $1 the context
+  # $2 response from the API
+  ERROR_MESSAGE=$(echo $2 | jq -r '.detail' 2>/dev/null)
+  if [[ -z $ERROR_MESSAGE ]] || [[ $ERROR_MESSAGE == 'null' ]] || [[ $ERROR_MESSAGE == " " ]]; then
+    prompt_user "SUCCESS" "Mise à jour effectuée"
+  else
+    prompt_user "ERROR" "$ERROR_MESSAGE"
+  fi
+}
+
+display_error_on_delete_or_return_response() {
+  # description: we look for any errors.
+  # parameters:
+  # $1 the context. Either while asking a token session or for any other request,
+  # $2 response from the API
+  ERROR_MESSAGE=$(echo $2 | jq -r '.detail' 2>/dev/zero)
+  if [[ -z $ERROR_MESSAGE ]] || [[ $ERROR_MESSAGE == 'null' ]] || [[ $ERROR_MESSAGE == " " ]]
+  then
+    if [[ $1 == "delete_book" ]]; then
+      if [[ $2 -eq 204 ]]; then
+        prompt_user "SUCCESS" "Suppresion livre effectuée"
+      else
+        prompt_user "ERROR" "Suppresion livre n'a pas pu être effectuée"
+      fi
+    elif [[ $1 == "delete_user" ]]; then
+      if [[ $2 -eq 204 ]]; then
+        prompt_user "SUCCESS" "Suppresion utilisateur effectuée"
+      else
+        prompt_user "ERROR" "Suppresion utilisateur n'a pas pu être effectuée"
+      fi
+    elif [[ $1 == "delete_books_category" ]]; then
+      if [[ $2 -eq 204 ]]; then
+        prompt_user "SUCCESS" "Suppresion catégorie effectuée"
+      else
+        prompt_user "ERROR" "Suppresion catégorie n'a pas pu être effectuée"
+      fi
+    elif [[ $1 == "delete_comment" ]]; then
+      if [[ $2 -eq 204 ]]; then
+        prompt_user "SUCCESS" "Suppresion commentaire effectuée"
+      else
+        prompt_user "ERROR" "Suppresion commentaire n'a pas pu être effectuée"
+      fi
+    elif [[ $1 == "delete_quote" ]]; then
+      if [[ $2 -eq 204 ]]; then
+        prompt_user "SUCCESS" "Suppresion citation effectuée"
+      else
+        prompt_user "ERROR" "Suppresion citation n'a pas pu être effectuée"
+      fi
+    fi
+  else
+    prompt_user "ERROR" "$ERROR_MESSAGE"
+  fi
+}
+
+make_update_book() {
+  read -p "ID DU LIVRE: " BOOK_ID
+  read -p "NOUVEAU TITRE DU LIVRE: " BOOK_TITLE
+  read -p "NOUVEL AUTEUR DU LIVRE: " BOOK_AUTHOR
+  read -p "NOUVEAU RESUME DU LIVRE: " BOOK_SUMMARY
+  read -p "NOUVELLE DESCRIPTION DU LIVRE: " BOOK_CONTENT
+  read -p "NOUVELLE CATEGORIE DU LIVRE: " BOOK_CATEGORY
+  read -p "NOUVELLE ANNEE DE PUBLICATION: " BOOK_PUBLICATION_YEAR
+  # Check for any blank fields
+  if [ -z "$BOOK_ID" ] || [ -z "$BOOK_TITLE" ] || [ -z "$BOOK_AUTHOR" ] || [ -z "$BOOK_SUMMARY" ] || [ -z "$BOOK_CONTENT" ] || [ -z "$BOOK_CATEGORY" ] || [ -z "$BOOK_PUBLICATION_YEAR" ]; then
+    prompt_user "ERROR" "Tous les champs doivent être complétés."
+    display_update_submenu
+  fi
+
+  # Construct the jq filter dynamically based on provided fields
+  JQ_FILTER='{}'
+  if [ -n "$BOOK_TITLE" ]; then
+    JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg title "$BOOK_TITLE" '.title = $title')
+  fi
+  if [ -n "$BOOK_AUTHOR" ]; then
+    JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg author "$BOOK_AUTHOR" '.author = $author')
+  fi
+  if [ -n "$BOOK_SUMMARY" ]; then
+    JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg summary "$BOOK_SUMMARY" '.summary = $summary')
+  fi
+  if [ -n "$BOOK_CONTENT" ]; then
+    JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg content "$BOOK_CONTENT" '.content = $content')
+  fi
+  if [ -n "$BOOK_CATEGORY" ]; then
+    JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg category "$BOOK_CATEGORY" '.category = $category')
+  fi
+  if [ -n "$BOOK_PUBLICATION_YEAR" ]; then
+    JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg year_of_publication "$BOOK_PUBLICATION_YEAR" '.year_of_publication = ($year_of_publication | tonumber)')
+  fi
+
+  # Generate JSON_PAYLOAD using the constructed jq filter
+  JSON_PAYLOAD=$(jq -n "$JQ_FILTER")
+
+  # Check if JSON_PAYLOAD is empty
+  if [[ -z "$JSON_PAYLOAD" || "$JSON_PAYLOAD" == "{}" ]]; then
+    prompt_user "ERROR" "Aucune modification demandée."
+    display_update_submenu
+  fi
+  RESPONSE=$(update_book "$SESSION_TOKEN" "$BOOK_ID" "$JSON_PAYLOAD")
+  display_error_on_update_or_return_response 'update_book' "$RESPONSE"
+}
+
+make_update_user() {
+  read -p "ID UTILISATEUR: " USER_ID
+  read -p "NOUVEAU NOM: " APP_USERNAME
+  read -p "NOUVEAU EMAIL: " USER_EMAIL
+  read -p "NOUVEAU MOT DE PASSE: " USER_PASSWORD
+  read -p "VERIFICATION MOT DE PASSE: " CHECK_PASSWORD
+  read -p "NOUVEAU ROLE: " USER_ROLE
+  # Check for any blank fields
+  if [ -z "$USER_ID" ] || [ -z "$APP_USERNAME" ] || [ -z "$USER_EMAIL" ] || [ -z "$USER_PASSWORD" ] || [ -z "$USER_PASSWORD" ] || [ -z "$USER_ROLE" ]; then
+    prompt_user "ERROR" "Tous les champs doivent être complétés."
+    display_update_submenu
+  fi
+
+  # Construct the jq filter dynamically based on provided fields
+  JQ_FILTER='{}'
+  if [ -n "$APP_USERNAME" ]; then
+    JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg title "$APP_USERNAME" '.username = $username')
+  fi
+  if [ -n "$USER_EMAIL" ]; then
+    JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg author "$USER_EMAIL" '.email = $email')
+  fi
+  if [ -n "$USER_PASSWORD" ]; then
+    JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg summary "$USER_PASSWORD" '.hashed_password = $hashed_password')
+  fi
+  if [ -n "$USER_ROLE" ]; then
+    JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg summary "$USER_ROLE" '.role = $role')
+  fi
+  # Generate JSON_PAYLOAD using the constructed jq filter
+  JSON_PAYLOAD=$(jq -n "$JQ_FILTER")
+
+  # Check if JSON_PAYLOAD is empty
+  if [[ -z "$JSON_PAYLOAD" || "$JSON_PAYLOAD" == "{}" ]]; then
+    prompt_user "ERROR" "Aucune modification demandée."
+    display_update_submenu
+  fi
+  RESPONSE=$(update_user "$SESSION_TOKEN" "$USER_ID" "$JSON_PAYLOAD")
+  display_error_on_update_or_return_response 'update_user' "$RESPONSE"
+}
+
+make_partial_update_book() {
+  read -p "ID DU LIVRE: " BOOK_ID
+  read -p "NOUVEAU TITRE DU LIVRE: " BOOK_TITLE
+  read -p "NOUVEL AUTEUR DU LIVRE: " BOOK_AUTHOR
+  read -p "NOUVEAU RESUME DU LIVRE: " BOOK_SUMMARY
+  read -p "NOUVELLE DESCRIPTION DU LIVRE: " BOOK_CONTENT
+  read -p "NOUVELLE CATEGORIE DU LIVRE: " BOOK_CATEGORY
+  read -p "NOUVELLE ANNEE DE PUBLICATION: " BOOK_PUBLICATION_YEAR
+
+  # Construct the jq filter dynamically based on provided fields
+  JQ_FILTER='{}'
+  if [ -n "$BOOK_TITLE" ]; then
+      JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg title "$BOOK_TITLE" '.title = $title')
+  fi
+  if [ -n "$BOOK_AUTHOR" ]; then
+      JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg author "$BOOK_AUTHOR" '.author = $author')
+  fi
+  if [ -n "$BOOK_SUMMARY" ]; then
+      JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg summary "$BOOK_SUMMARY" '.summary = $summary')
+  fi
+  if [ -n "$BOOK_CONTENT" ]; then
+      JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg content "$BOOK_CONTENT" '.content = $content')
+  fi
+  if [ -n "$BOOK_CATEGORY" ]; then
+      JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg category "$BOOK_CATEGORY" '.category = $category')
+  fi
+  if [ -n "$BOOK_PUBLICATION_YEAR" ]; then
+      JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg year_of_publication "$BOOK_PUBLICATION_YEAR" '.year_of_publication = ($year_of_publication | tonumber)')
+  fi
+
+  # Generate JSON_PAYLOAD using the constructed jq filter
+  JSON_PAYLOAD=$(jq -n "$JQ_FILTER")
+
+  # Check if JSON_PAYLOAD is empty
+  if [[ -z "$JSON_PAYLOAD" || "$JSON_PAYLOAD" == "{}" ]]; then
+    prompt_user "ERROR" "Aucune modification demandée."
+    display_mainmenu
+  fi
+  RESPONSE=$(partial_update_book "$SESSION_TOKEN" "$BOOK_ID" "$JSON_PAYLOAD")
+  display_error_on_update_or_return_response 'partial_update_book' "$RESPONSE"
+}
+
+make_partial_update_user() {
+  read -p "ID UTILISATEUR: " USER_ID
+  read -p "NOUVEAU NOM: " APP_USERNAME
+  read -p "NOUVEAU EMAIL: " USER_EMAIL
+  read -p "NOUVEAU ROLE (admin/user): " USER_ROLE
+
+  # Construct the jq filter dynamically based on provided fields
+  JQ_FILTER='{}'
+  if [ -n "$APP_USERNAME" ]; then
+      JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg title "$APP_USERNAME" '.username = $username')
+  fi
+  if [ -n "$USER_EMAIL" ]; then
+      JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg author "$USER_EMAIL" '.email = $email')
+  fi
+  if [ -n "$USER_ROLE" ]; then
+      JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg summary "$USER_ROLE" '.role = $role')
+  fi
+
+  # Generate JSON_PAYLOAD using the constructed jq filter
+  JSON_PAYLOAD=$(jq -n "$JQ_FILTER")
+
+  # Check if JSON_PAYLOAD is empty
+  if [[ -z "$JSON_PAYLOAD" || "$JSON_PAYLOAD" == "{}" ]]; then
+    prompt_user "ERROR" "Aucune modification demandée."
+    display_mainmenu
+  fi
+  RESPONSE=$(partial_update_user "$SESSION_TOKEN" "$USER_ID" "$JSON_PAYLOAD")
+  display_error_on_update_or_return_response 'partial_update_user' "$RESPONSE"
+}
+
+make_update_category() {
+  read -p "ID CATEGORIE: " CATEGORY_ID
+  read -p "NOUVEAU NOM CATEGORIE: " CATEGORY_TITLE
+  # Check for any blank fields
+  if [ -z "$CATEGORY_ID" ] || [ -z "$CATEGORY_TITLE" ]; then
+    prompt_user "ERROR" "Tous les champs doivent être complétés."
+    display_update_submenu
+  fi
+  # Construct the jq filter dynamically based on provided fields
+  JQ_FILTER='{}'
+  if [ -n "$CATEGORY_TITLE" ]; then
+    JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg title "$CATEGORY_TITLE" '.title = $title')
+  fi
+  # Check if JSON_PAYLOAD is empty
+  if [[ -z "$JSON_PAYLOAD" || "$JSON_PAYLOAD" == "{}" ]]; then
+    prompt_user "ERROR" "Aucune modification demandée."
+    display_update_submenu
+  fi
+  RESPONSE=$(update_category "$SESSION_TOKEN" "$CATEGORY_ID" "$JSON_PAYLOAD")
+  display_error_on_update_or_return_response 'update_category' "$RESPONSE"
+}
+
+make_update_comment() {
+  read -p "ID COMMENTAIRE: " COMMENT_ID
+  read -p "NOUVEAU COMMENTAIRE: " COMMENT_TEXT
+  # Check for any blank fields
+  if [ -z "$COMMENT_ID" ] || [ -z "$COMMENT_TEXT" ]; then
+    prompt_user "ERROR" "Tous les champs doivent être complétés."
+    display_update_submenu
+  fi
+  # Construct the jq filter dynamically based on provided fields
+  JQ_FILTER='{}'
+  if [ -n "$COMMENT_TEXT" ]; then
+    JQ_FILTER=$(echo "$JQ_FILTER" | jq --arg title "$COMMENT_TEXT" '.text = $text')
+  fi
+  # Check if JSON_PAYLOAD is empty
+  if [[ -z "$JSON_PAYLOAD" || "$JSON_PAYLOAD" == "{}" ]]; then
+    prompt_user "ERROR" "Aucune modification demandée."
+    display_update_submenu
+  fi
+  RESPONSE=$(update_comment "$SESSION_TOKEN" "$COMMENT_ID" "$JSON_PAYLOAD")
+  display_error_on_update_or_return_response 'update_comment' "$RESPONSE"
+}
