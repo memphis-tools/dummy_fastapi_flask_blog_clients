@@ -40,6 +40,7 @@ jobs:
         echo "ADMIN_PASSWORD"="${{ secrets.ADMIN_PASSWORD }}" >> .env
         echo "ADMIN_EMAIL"="${{ secrets.ADMIN_EMAIL }}" >> .env
         echo "BETTERSTACK_SOURCE_TOKEN"="${{ secrets.BETTERSTACK_SOURCE_TOKEN }}" >> .env
+        cat .env
 
     - name: Update the project init submodule
       run: git submodule init
