@@ -21,6 +21,12 @@ Clone the repository:
 
     git clone --recurse-submodules https://github.com/memphis-tools/dummy_fastapi_flask_blog_client.git
 
+  or
+
+    git clone --recurse-submodules git@github.com:memphis-tools/dummy_fastapi_flask_blog_clients.git
+
+  then
+
     cd dummy_fastapi_flask_blog_client
 
 Ensure the submodule project is refreshed:
@@ -46,7 +52,7 @@ Set a local .env file with something like this:
 
 As the clients need a running dummy blog api, you first clone the repository and build the services:
 
-    docker-compose -f docker-compose.yml up -d --build
+    docker compose -f docker-compose.yml up -d --build
 
   ![Screenshot](illustrations/dummy-ops_api_client_docker.png)
 

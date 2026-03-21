@@ -41,7 +41,7 @@ get_session_token() {
   curl -s -X "POST" "$API_URL/token/" \
   -H "Accept: application/json" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=&username=$1&password=$2&scope=&client_id=&client_secret="
+  -d "grant_type=password&username=$1&password=$2&scope=&client_id=&client_secret="
 }
 
 get_routes() {
