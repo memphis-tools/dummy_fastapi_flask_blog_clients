@@ -28,7 +28,7 @@ setup() {
   [ $status -eq 0 ]
   [ "$output | jq -e 'length' > 0" ]
   first_dummy_book_title=$(echo "$output" | jq -r '.title')
-  [ "$first_dummy_book_title" = "Neque porro quisquam est qui dolorem" ]
+  [ "$first_dummy_book_title" = "La Guerre hors limites" ]
 }
 
 @test "get_book_detail raises an error if book id does not exists" {
@@ -165,5 +165,5 @@ setup() {
   [ -n "$output" ]
   [ $status -eq 0 ]
   response=$(egrep -o '4([0-9]+)' <<< $output)
-  [ "$response" = "401" ]
+  [ "$response" = "403" ]
 }
