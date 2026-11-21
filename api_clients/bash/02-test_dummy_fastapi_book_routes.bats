@@ -28,6 +28,7 @@ setup() {
   [ $status -eq 0 ]
   [ "$output | jq -e 'length' > 0" ]
   first_dummy_book_title=$(echo "$output" | jq -r '.title')
+  echo "DEBUG: first_dummy_book_title = $first_dummy_book_title"
   [ "$first_dummy_book_title" = "Neque porro quisquam est qui dolorem" ]
 }
 
