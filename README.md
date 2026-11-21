@@ -35,7 +35,7 @@ Ensure the submodule project is refreshed:
 
 Set a local .env file with something like this:
 
-    SCOPE="local_test"
+    SCOPE="test"
     POSTGRES_USER="postgres"
     POSTGRES_PASSWORD="postgres"
     POSTGRES_TEST_DB_NAME="test_dummy_blog"

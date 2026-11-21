@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 source ./api_clients/bash/dummy-ops_api_client_vars
 source ./api_clients/bash/dummy-ops_api_client_menus

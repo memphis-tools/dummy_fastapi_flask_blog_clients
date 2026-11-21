@@ -1,8 +1,6 @@
-version: '3.9'
-
 services:
   db:
-    image: postgres:15.0-alpine
+    image: postgres:18.0-alpine
     container_name: db
     env_file:
       - .env
@@ -10,6 +8,11 @@ services:
       - "5432:5432"
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   fastapi:
     build:
@@ -21,7 +24,8 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - app-network
 
@@ -38,7 +42,7 @@ services:
     networks:
       - app-network
     volumes:
-      - ./api_clients/bash:/app
+      - ./api_clients/bash:/app:Z
 
 networks:
   app-network:
