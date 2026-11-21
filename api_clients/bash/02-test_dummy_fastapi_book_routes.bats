@@ -165,5 +165,6 @@ setup() {
   [ -n "$output" ]
   [ $status -eq 0 ]
   response=$(egrep -o '4([0-9]+)' <<< $output)
+  echo "DEBUG: response = $response"
   [ "$response" = "401" ]
 }
