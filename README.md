@@ -13,7 +13,7 @@ This "dummy blog application" Github project is at: https://github.com/memphis-t
 
 bats >= 1.8.2-1
 
-jq => 1.6-14
+jq >= 1.6-14
 
 ## HOW USE IT
 
