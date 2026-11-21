@@ -6,14 +6,6 @@ jobs:
   run_bats_test:
     runs-on: ubuntu-latest
 
-    services:
-      docker:
-        image: docker:24.0.6
-        options: --privileged
-        ports:
-          - 5432:5432
-          - 8000:8000
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
