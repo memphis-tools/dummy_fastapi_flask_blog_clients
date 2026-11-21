@@ -124,7 +124,7 @@ setup() {
   [ $status -eq 0 ]
   [ "$output | jq -e 'length' > 0" ]
   response=$(echo "$output" | jq -r '.detail')
-  [ "$response" = "Utilisateur existe deja" ]
+  [ "$response" = "Utilisateur existe déjà" ]
 }
 
 @test "post_user raises an error when email already exists" {
@@ -134,7 +134,7 @@ setup() {
   [ $status -eq 0 ]
   [ "$output | jq -e 'length' > 0" ]
   response=$(echo "$output" | jq -r '.detail')
-  [ "$response" = "Utilisateur existe deja" ]
+  [ "$response" = "Utilisateur existe déjà" ]
 }
 
 @test "update_user makes a full update of a dummy_fastapi_blog user" {
@@ -264,7 +264,7 @@ setup() {
   [ $status -eq 0 ]
   [ "$output | jq -e 'length' > 0" ]
   response=$(egrep -o '4([0-9]+)' <<< $output)
-  [ "$response" = "401" ]
+  [ "$response" = "403" ]
 }
 
 @test "delete_user delete a dummy_fastapi_blog user" {

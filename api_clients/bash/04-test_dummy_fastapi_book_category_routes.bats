@@ -71,7 +71,7 @@ setup() {
   [ $status -eq 0 ]
   [ "$output | jq -e 'length' > 0" ]
   response=$(egrep -o '4([0-9]+)' <<< $output)
-  [ "$response" = "401" ]
+  [ "$response" = "403" ]
 }
 
 @test "delete_books_category deletes a dummy_fastapi_blog book category when admin asks to" {

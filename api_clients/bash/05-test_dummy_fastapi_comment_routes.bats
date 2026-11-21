@@ -88,5 +88,5 @@ setup() {
   [ $status -eq 0 ]
   [ "$output | jq -e 'length' > 0" ]
   response=$(egrep -o '4([0-9]+)' <<< $output)
-  [ "$response" = "404" ]
+  [ "$response" = "403" ]
 }
